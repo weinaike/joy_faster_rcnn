@@ -201,7 +201,7 @@ class joyoung(imdb):
         # Load object bounding boxes into a data frame.
         for i in range(num_objs):
             line=lines[i+1]
-	    line_split=line.split(' ')
+            line_split=line.split(' ')
 	    x1=np.max((0,int(line_split[0])-1))
             y1=np.max((0,int(line_split[1])-1))
             x2=int(line_split[2])-1
@@ -256,12 +256,12 @@ class joyoung(imdb):
 
     def _do_python_eval(self, output_dir = 'output'):
         annopath = os.path.join(
-            self._devkit_path,
+            cfg.DATA_DIR,
             'JoyData',
             'Annotations',
             '{:s}.txt')
         imagesetfile = os.path.join(
-            self._devkit_path,
+            cfg.DATA_DIR,
             'JoyData',
             'ImageSets',
              self._image_set + '.txt')

@@ -201,7 +201,7 @@ class joyoung(imdb):
         # Load object bounding boxes into a data frame.
         for i in range(num_objs):
             line=lines[i+1]
-	    line_split=line.split(' ')
+            line_split=line.split(' ')
 	    x1=np.max((0,int(line_split[0])-1))
             y1=np.max((0,int(line_split[1])-1))
             x2=int(line_split[2])-1
@@ -240,8 +240,6 @@ class joyoung(imdb):
                 continue
             print 'Writing {} VOC results file'.format(cls)
             filename = self._get_voc_results_file_template().format(cls)
-            # print filename
-            # filename.encode("utf8")
             with open(filename, 'wt') as f:
                 for im_ind, index in enumerate(self.image_index):
                     dets = all_boxes[cls_ind][im_ind]
