@@ -1,0 +1,4 @@
+src/caffe/test/test_smooth_L1_loss_layer.cpp:11:35: fatal error: caffe/vision_layers.hpp: No such file or directory
+ #include "caffe/vision_layers.hpp"
+                                   ^
+compilation terminated.
