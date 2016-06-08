@@ -14,9 +14,11 @@ from datasets.coco import coco
 from datasets.joyoung import joyoung
 import numpy as np
 # Set up joy_<split> 
-for split in ['train', 'val', 'trainval', 'test']:
-    name = 'joy_{}'.format(split)
-    __sets[name] = (lambda split=split: joyoung(split))
+for loc in ['side','mid']:
+	for split in ['train', 'val', 'trainval', 'test']:
+	    name = 'joy_{}_{}'.format(loc,split)
+	    __sets[name] = (lambda split=split, loc=loc: joyoung(split, loc))
+
 
 # Set up voc_<year>_<split> using selective search "fast" mode
 for year in ['2007', '2012']:

@@ -23,9 +23,15 @@ EXTRA_ARGS=${array[@]:3:$len}
 EXTRA_ARGS_SLUG=${EXTRA_ARGS// /_}
 
 case $DATASET in
-  joyoung)
-    TRAIN_IMDB="joy_trainval"
-    TEST_IMDB="joy_test"
+  joy_side)
+    TRAIN_IMDB="joy_side_trainval"
+    TEST_IMDB="joy_side_test"
+    PT_DIR="joyoung"
+    ITERS=70000
+    ;;
+  joy_mid)
+    TRAIN_IMDB="joy_mid_trainval"
+    TEST_IMDB="joy_mid_test"
     PT_DIR="joyoung"
     ITERS=70000
     ;;

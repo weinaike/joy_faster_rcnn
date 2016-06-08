@@ -21,12 +21,13 @@ from datasets.joy_eval import joy_eval
 from fast_rcnn.config import cfg
 
 class joyoung(imdb):
-    def __init__(self, image_set, devkit_path=None):
-        imdb.__init__(self, image_set)
+    def __init__(self, image_set, loc, devkit_path=None):
+        imdb.__init__(self, 'joy_' + loc + '_' + image_set)
+        self._loc = loc
         self._image_set = image_set
         self._devkit_path = self._get_default_path() if devkit_path is None \
                             else devkit_path
-        self._data_path = os.path.join(self._devkit_path)
+        self._data_path = os.path.join(self._devkit_path, 'Joy' + self._loc)
         self._classes = ('__background__', # always index 0
                         "鸡蛋","玉米","茄子-长","茄子-圆","番茄","胡萝卜",
 			"青椒-长","青椒-圆","冬瓜","黄瓜","苦瓜","丝瓜",
@@ -47,7 +48,7 @@ class joyoung(imdb):
                        'use_diff'    : False,
                        'matlab_eval' : False,
                        'rpn_file'    : None,
-                       'min_size'    : 2}		
+                       'min_size'    : 2}
 
         assert os.path.exists(self._devkit_path), \
                 'VOCdevkit path does not exist: {}'.format(self._devkit_path)
@@ -65,7 +66,7 @@ class joyoung(imdb):
         Construct an image path from the image's "index" identifier.
         """
         image_path = os.path.join(self._data_path, 'JPEGImages',
-                                  index+self._image_ext)
+                                  index + self._image_ext)
         assert os.path.exists(image_path), \
                 'Path does not exist: {}'.format(image_path)
         return image_path
@@ -140,7 +141,7 @@ class joyoung(imdb):
         return roidb
 
     def rpn_roidb(self):
-        if self._image_set != 'test':
+        if int(self._year) == 2007 or self._image_set != 'test':
             gt_roidb = self.gt_roidb()
             rpn_roidb = self._load_rpn_roidb(gt_roidb)
             roidb = imdb.merge_roidbs(gt_roidb, rpn_roidb)
@@ -177,7 +178,6 @@ class joyoung(imdb):
 
         return self.create_roidb_from_box_list(box_list, gt_roidb)
 
-
     def _load_pascal_annotation(self, index):
         """
         Load image and bounding boxes info from XML file in the PASCAL VOC
@@ -202,10 +202,10 @@ class joyoung(imdb):
         for i in range(num_objs):
             line=lines[i+1]
             line_split=line.split(' ')
-	    x1=np.max((0,int(line_split[0])-1))
-            y1=np.max((0,int(line_split[1])-1))
-            x2=int(line_split[2])-1
-            y2=int(line_split[3])-1
+	    x1=float(line_split[0])
+            y1=float(line_split[1])
+            x2=float(line_split[2])-1.0
+            y2=float(line_split[3])-1.0
             boxes[i, :] = [x1, y1, x2, y2]
             cls = self._class_to_ind[line_split[4]]
             gt_classes[i] = cls
@@ -221,17 +221,18 @@ class joyoung(imdb):
                 'seg_areas' : seg_areas}
 
     def _get_comp_id(self):
-        #comp_id = (self._comp_id + '_' + self._salt if self.config['use_salt']
-        #    else self._comp_id)
+        comp_id = (self._comp_id + '_' + self._salt if self.config['use_salt']
+            else self._comp_id)
         return self._comp_id
 
     def _get_voc_results_file_template(self):
-        # VOCdevkit/results/JOY/<comp_id>_det_test_aeroplane.txt
+        # VOCdevkit/results/VOC2007/Main/<comp_id>_det_test_aeroplane.txt
         filename = self._get_comp_id() + '_det_' + self._image_set + '_{:s}.txt'
         path = os.path.join(
             self._devkit_path,
             'results',
-             filename)
+            'Joy' + self._loc,
+            filename)
         return path
 
     def _write_voc_results_file(self, all_boxes):
@@ -254,19 +255,18 @@ class joyoung(imdb):
 
     def _do_python_eval(self, output_dir = 'output'):
         annopath = os.path.join(
-            cfg.DATA_DIR,
-            'JoyData',
+            self._devkit_path,
+            'Joy' + self._loc,
             'Annotations',
             '{:s}.txt')
         imagesetfile = os.path.join(
-            cfg.DATA_DIR,
-            'JoyData',
+            self._devkit_path,
+            'Joy' + self._loc,
             'ImageSets',
-             self._image_set + '.txt')
+            self._image_set + '.txt')
         cachedir = os.path.join(self._devkit_path, 'annotations_cache')
         aps = []
-        # The PASCAL VOC metric changed in 2010
-        
+        # The PASCAL VOC metric changed in 2010        
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
         for i, cls in enumerate(self._classes):
@@ -276,15 +276,15 @@ class joyoung(imdb):
             rec, prec, ap = joy_eval(
                 filename, annopath, imagesetfile, cls, cachedir, ovthresh=0.5)
             aps += [ap]
-            print('AP for {} = {:.4f}'.format(cls, ap))
+            print('AP for {} = {:.3f},	recall= {:.3f},	precision ={:.3f}'.format(cls,ap,rec,prec))
             with open(os.path.join(output_dir, cls + '_pr.pkl'), 'w') as f:
                 cPickle.dump({'rec': rec, 'prec': prec, 'ap': ap}, f)
         print('Mean AP = {:.4f}'.format(np.mean(aps)))
         print('~~~~~~~~')
         print('Results:')
         for ap in aps:
-            print('{:.3f}'.format(ap))
-        print('{:.3f}'.format(np.mean(aps)))
+            print('ap = {:.3f}'.format(ap))
+        print('mean ap = {:.3f}'.format(np.mean(aps)))
         print('~~~~~~~~')
         print('')
         print('--------------------------------------------------------------')
@@ -331,6 +331,6 @@ class joyoung(imdb):
 
 if __name__ == '__main__':
     from datasets.joyoung import joyoung
-    d = joyoung('trainval')
+    d = joyoung('trainval', 'side')
     res = d.roidb
     from IPython import embed; embed()

@@ -108,7 +108,8 @@ def joy_eval(detpath,
             recs = cPickle.load(f)    
     # extract gt objects for this class
     class_recs = {}
-    npos = 0
+    npos = 0	# number of positive
+
     for imagename in imagenames:
         R = [obj for obj in recs[imagename] if obj['name'] == classname]
         bbox = np.array([x['bbox'] for x in R])
@@ -137,10 +138,10 @@ def joy_eval(detpath,
     tp = np.zeros(nd)
     fp = np.zeros(nd)
     for d in range(nd):
-        R = class_recs[image_ids[d]]
-        bb = BB[d, :].astype(float)
+        R = class_recs[image_ids[d]]   #ground truth bbox and det
+        bb = BB[d, :].astype(float)    #detect box 
         ovmax = -np.inf
-        BBGT = R['bbox'].astype(float)
+        BBGT = R['bbox'].astype(float) #ground truth
 
         if BBGT.size > 0:
             # compute overlaps
@@ -163,17 +164,22 @@ def joy_eval(detpath,
             jmax = np.argmax(overlaps)
 
         if ovmax > ovthresh:
-            tp[d] = 1.
+            if not R['det'][jmax]:
+                tp[d] = 1.        # true predict
+                R['det'][jmax] = 1
+            else:
+                fp[d] = 1.
+	
         else:
-            fp[d] = 1.
+            fp[d] = 1.		# false predict
 
     # compute precision recall
     fp = np.cumsum(fp)
     tp = np.cumsum(tp)
-    rec = tp / float(npos)
+    rec = tp / float(npos)      # recall rate
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth
-    prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
+    prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps) # precision
     ap = joy_ap(rec, prec)
 
-    return rec, prec, ap
+    return rec[-1], prec[-1], ap
