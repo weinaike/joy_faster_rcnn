@@ -264,7 +264,7 @@ class joyoung(imdb):
             'Joy' + self._loc,
             'ImageSets',
             self._image_set + '.txt')
-        cachedir = os.path.join(self._devkit_path, 'annotations_cache')
+        cachedir = os.path.join(self._devkit_path, 'annotations_cache','Joy'+self._loc)
         aps = []
         # The PASCAL VOC metric changed in 2010        
         if not os.path.isdir(output_dir):
